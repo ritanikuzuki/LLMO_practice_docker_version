@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLMO コンテンツ生成システム - CloudFlow Dynamics</title>
+    <meta name="description" content="LLMに引用されやすいコンテンツを自動生成するシステム">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <h1>📝 LLMO コンテンツ生成システム</h1>
+            <p class="subtitle">CloudFlow Dynamics — AI に引用されるコンテンツを作る</p>
+        </div>
+    </header>
+
+    <main>
+        <!-- ステップ1: 入力 -->
+        <section id="step-input" class="card">
+            <div class="step-badge">Step 1</div>
+            <h2>キーワード・概要を入力</h2>
+
+            <div class="form-group">
+                <label for="keyword">メインキーワード <span class="required">*必須</span></label>
+                <input type="text" id="keyword" placeholder="例: プロジェクト管理、営業 DX、SaaS マーケティング">
+            </div>
+
+            <div class="form-group">
+                <label for="summary">記事の概要 / 既存コンテンツ <span class="optional">任意</span></label>
+                <textarea id="summary" rows="5" placeholder="書きたい記事の概要、またはLLMO最適化したい既存コンテンツを貼り付けてください"></textarea>
+            </div>
+
+            <button id="btn-generate-titles" class="btn-primary" onclick="generateTitles()">
+                タイトル案を生成する
+            </button>
+        </section>
+
+        <!-- ステップ2: タイトル選択 -->
+        <section id="step-titles" class="card hidden">
+            <div class="step-badge">Step 2</div>
+            <h2>タイトル案を選択</h2>
+            <p class="hint">生成されたタイトル案から1つを選んでください。クリックで選択できます。</p>
+
+            <div id="titles-list"></div>
+
+            <div class="action-row">
+                <button class="btn-secondary" onclick="regenerateTitles()">🔄 タイトルを再生成</button>
+                <button id="btn-generate-article" class="btn-primary" onclick="generateArticle()" disabled>
+                    選択したタイトルで記事を生成
+                </button>
+            </div>
+        </section>
+
+        <!-- ステップ3: 記事表示 -->
+        <section id="step-article" class="card hidden">
+            <div class="step-badge">Step 3</div>
+            <h2>生成された記事</h2>
+
+            <div class="tab-bar">
+                <button class="tab active" onclick="switchTab('preview')">プレビュー</button>
+                <button class="tab" onclick="switchTab('markdown')">Markdown</button>
+            </div>
+
+            <div id="article-preview" class="article-content"></div>
+            <div id="article-markdown" class="article-content hidden">
+                <pre><code id="article-md-code"></code></pre>
+            </div>
+
+            <div class="action-row">
+                <button class="btn-secondary" onclick="copyMarkdown()">📋 Markdownをコピー</button>
+                <button class="btn-secondary" onclick="resetAll()">🔄 最初からやり直す</button>
+            </div>
+        </section>
+
+        <!-- ローディング -->
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p id="loading-text">生成中...</p>
+        </div>
+    </main>
+
+    <script>
+        let selectedTitle = "";
+        let articleMarkdown = "";
+
+        async function generateTitles() {
+            const keyword = document.getElementById("keyword").value.trim();
+            const summary = document.getElementById("summary").value.trim();
+
+            if (!keyword) {
+                alert("キーワードを入力してください");
+                return;
+            }
+
+            showLoading("タイトル案を生成中...");
+
+            try {
+                const res = await fetch("/api/generate-titles", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ keyword, summary })
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                renderTitles(data.titles);
+                document.getElementById("step-titles").classList.remove("hidden");
+                document.getElementById("step-titles").scrollIntoView({ behavior: "smooth" });
+            } catch (e) {
+                alert("通信エラーが発生しました: " + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function regenerateTitles() {
+            selectedTitle = "";
+            document.getElementById("btn-generate-article").disabled = true;
+            generateTitles();
+        }
+
+        function renderTitles(titles) {
+            const list = document.getElementById("titles-list");
+            list.innerHTML = "";
+            selectedTitle = "";
+
+            titles.forEach((item, i) => {
+                const div = document.createElement("div");
+                div.className = "title-option";
+                div.id = `title-option-${i}`;
+                div.textContent = item.title;
+                div.onclick = () => selectTitle(item.title, i, titles.length);
+                list.appendChild(div);
+            });
+        }
+
+        function selectTitle(title, index, total) {
+            selectedTitle = title;
+            for (let i = 0; i < total; i++) {
+                const el = document.getElementById(`title-option-${i}`);
+                if (el) el.classList.remove("selected");
+            }
+            document.getElementById(`title-option-${index}`).classList.add("selected");
+            document.getElementById("btn-generate-article").disabled = false;
+        }
+
+        async function generateArticle() {
+            if (!selectedTitle) {
+                alert("タイトルを選択してください");
+                return;
+            }
+
+            const keyword = document.getElementById("keyword").value.trim();
+            const summary = document.getElementById("summary").value.trim();
+
+            showLoading("記事を生成中... (30秒〜1分ほどかかります)");
+
+            try {
+                const res = await fetch("/api/generate-article", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title: selectedTitle, keyword, summary })
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                articleMarkdown = data.article_md;
+                document.getElementById("article-preview").innerHTML = data.article_html;
+                document.getElementById("article-md-code").textContent = data.article_md;
+
+                document.getElementById("step-article").classList.remove("hidden");
+                document.getElementById("step-article").scrollIntoView({ behavior: "smooth" });
+            } catch (e) {
+                alert("通信エラーが発生しました: " + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+            if (tab === "preview") {
+                document.getElementById("article-preview").classList.remove("hidden");
+                document.getElementById("article-markdown").classList.add("hidden");
+                document.querySelectorAll(".tab")[0].classList.add("active");
+            } else {
+                document.getElementById("article-preview").classList.add("hidden");
+                document.getElementById("article-markdown").classList.remove("hidden");
+                document.querySelectorAll(".tab")[1].classList.add("active");
+            }
+        }
+
+        function copyMarkdown() {
+            navigator.clipboard.writeText(articleMarkdown).then(() => {
+                const btn = event.target;
+                const orig = btn.textContent;
+                btn.textContent = "✅ コピーしました！";
+                setTimeout(() => btn.textContent = orig, 2000);
+            });
+        }
+
+        function resetAll() {
+            selectedTitle = "";
+            articleMarkdown = "";
+            document.getElementById("step-titles").classList.add("hidden");
+            document.getElementById("step-article").classList.add("hidden");
+            document.getElementById("keyword").value = "";
+            document.getElementById("summary").value = "";
+            document.getElementById("titles-list").innerHTML = "";
+            document.getElementById("article-preview").innerHTML = "";
+            document.getElementById("article-md-code").textContent = "";
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function showLoading(text) {
+            document.getElementById("loading-text").textContent = text;
+            document.getElementById("loading").classList.remove("hidden");
+        }
+
+        function hideLoading() {
+            document.getElementById("loading").classList.add("hidden");
+        }
+    </script>
+</body>
+</html>
