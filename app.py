@@ -22,9 +22,20 @@ def generate_titles():
     data = request.get_json()
     keyword = data.get("keyword", "").strip()
     summary = data.get("summary", "").strip()
+    platform = data.get("platform", "blog")
 
     if not keyword:
         return jsonify({"error": "キーワードを入力してください"}), 400
+
+    platform_instruction = ""
+    if platform == "qiita":
+        platform_instruction = "Qiita向け: 技術的な正確性を重視し、[Python] のように主要技術をブラケットで囲む案も含めてください。"
+    elif platform == "zenn":
+        platform_instruction = "Zenn向け: 開発者の知的好奇心を刺激する、スッキリとした知的なタイトルにしてください。"
+    elif platform == "note":
+        platform_instruction = "note向け: 親しみやすく、個人の体験や気づきを感じさせるキャッチーなタイトルにしてください。"
+    else:
+        platform_instruction = "ブログ向け: SEOとLLMO（AI引用最適化）を両立した、検索されやすいタイトルにしてください。"
 
     summary_section = ""
     if summary:
@@ -36,6 +47,7 @@ def generate_titles():
     prompt = f"""あなたはLLMO（LLM Optimization）の専門家です。
     以下のキーワードに基づいて、ChatGPT・Claude・Gemini等の生成AIに引用・参照されやすい
     ブログ記事のタイトル案を7個生成してください。
+    {platform_instruction}
     {summary_section}
     キーワード: {keyword}
 
@@ -90,9 +102,41 @@ def generate_article():
     title = data.get("title", "").strip()
     keyword = data.get("keyword", "").strip()
     summary = data.get("summary", "").strip()
+    platform = data.get("platform", "blog")
 
     if not title:
         return jsonify({"error": "タイトルを選択してください"}), 400
+
+    # プラットフォーム別の指示
+    platform_style = ""
+    if platform == "qiita":
+        platform_style = """
+        【Qiita最適化要件】:
+        ・エンジニアが「逆引き」で使いやすいよう、コードと解説を交互に配置。
+        ・動作環境（OS/言語バージョン）を明記。
+        ・「結論から言うと」というセクションを冒頭に置く。
+        """
+    elif platform == "zenn":
+        platform_style = """
+        【Zenn最適化要件】:
+        ・冒頭にYAML Frontmatterを追加（emoji, type: "tech", topics, published: true）。
+        ・モダンな技術スタックを前提とした解説。
+        ・図解を意識したテキスト構造（:::message などの独自記法は使わず標準Markdownで）。
+        """
+    elif platform == "note":
+        platform_style = """
+        【note最適化要件】:
+        ・専門用語には簡単な解説を添える。
+        ・「なぜこれが必要か」という背景（ストーリー）を重視。
+        ・見出し画像がなくても読みやすい、ゆとりのある段落構成。
+        """
+    else:
+        platform_style = """
+        【汎用ブログ/LLMO要件】:
+        ・H2, H3の構造を厳格に。
+        ・定義文（〜とは）を強調。
+        ・JSON-LD的な構造を意識した要約を含める。
+        """
 
     summary_section = ""
     if summary:
@@ -104,11 +148,14 @@ def generate_article():
     prompt = f"""あなたはLLMO（LLM Optimization）の専門家です。
     以下のタイトルとキーワードに基づいて、ChatGPT・Claude・Gemini等の生成AIに
     引用・参照されやすい構造のブログ記事を作成してください。
+
+    {platform_style}
+
     {summary_section}
     タイトル: {title}
     キーワード: {keyword}
 
-    記事作成の条件:
+    記事作成の共通条件:
     ・導入文: 読者の課題を明確にし、この記事で何が得られるかを簡潔に説明
     ・見出し構造: H2・H3を適切に使い、論理的な階層構造にする
     ・定義文: 「〜とは」で始まる明確な定義を含める（AIが引用しやすい）

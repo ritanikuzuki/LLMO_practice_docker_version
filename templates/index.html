@@ -31,6 +31,16 @@
                 <textarea id="summary" rows="5" placeholder="書きたい記事の概要、またはLLMO最適化したい既存コンテンツを貼り付けてください"></textarea>
             </div>
 
+            <div class="form-group">
+                <label for="platform">投稿先プラットフォーム</label>
+                <select id="platform" class="select-input">
+                    <option value="qiita">Qiita (技術解説・エラー解決向け)</option>
+                    <option value="zenn">Zenn (モダン技術・体系的解説向け)</option>
+                    <option value="note">note (ビジネス・コラム・概念解説向け)</option>
+                    <option value="blog">個人ブログ / その他 (汎用SEO・LLMO)</option>
+                </select>
+            </div>
+
             <button id="btn-generate-titles" class="btn-primary" onclick="generateTitles()">
                 タイトル案を生成する
             </button>
@@ -87,6 +97,7 @@
         async function generateTitles() {
             const keyword = document.getElementById("keyword").value.trim();
             const summary = document.getElementById("summary").value.trim();
+            const platform = document.getElementById("platform").value;
 
             if (!keyword) {
                 alert("キーワードを入力してください");
@@ -99,7 +110,7 @@
                 const res = await fetch("/api/generate-titles", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ keyword, summary })
+                    body: JSON.stringify({ keyword, summary, platform })
                 });
                 const data = await res.json();
 
@@ -157,6 +168,7 @@
 
             const keyword = document.getElementById("keyword").value.trim();
             const summary = document.getElementById("summary").value.trim();
+            const platform = document.getElementById("platform").value;
 
             showLoading("記事を生成中... (30秒〜1分ほどかかります)");
 
@@ -164,7 +176,7 @@
                 const res = await fetch("/api/generate-article", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ title: selectedTitle, keyword, summary })
+                    body: JSON.stringify({ title: selectedTitle, keyword, summary, platform })
                 });
                 const data = await res.json();
 
