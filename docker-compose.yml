@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_ENV=development
+      # Note: OPENAI_API_KEY is loaded from .env file automatically by docker-compose
+      # Make sure .env file exists in the same directory
+    env_file:
+      - .env
