@@ -4,6 +4,8 @@ from flask import Flask, render_template, request, jsonify
 from openai import OpenAI
 from dotenv import load_dotenv
 import markdown
+import urllib.request
+import urllib.parse
 
 load_dotenv()
 
@@ -198,6 +200,63 @@ def generate_article():
 
     except Exception as e:
         return jsonify({"error": f"エラーが発生しました: {str(e)}"}), 500
+
+
+@app.route("/api/post-to-qiita", methods=["POST"])
+def post_to_qiita():
+    """Qiitaに記事を投稿する"""
+    data = request.get_json()
+    token = data.get("token", "").strip()
+    title = data.get("title", "").strip()
+    body = data.get("body", "").strip()
+    tags_str = data.get("tags", "LLMO,AI").strip()
+    is_private = data.get("private", True)
+
+    if not token:
+        return jsonify({"error": "Qiitaアクセストークンが必要です"}), 400
+    if not title or not body:
+        return jsonify({"error": "タイトルと本文が必要です"}), 400
+
+    # タグの整形 (例: "Python, Flask" -> [{"name": "Python"}, {"name": "Flask"}])
+    tags = [{"name": t.strip()} for t in tags_str.split(",") if t.strip()]
+    if not tags:
+        tags = [{"name": "LLMO"}]
+
+    post_data = {
+        "title": title,
+        "body": body,
+        "tags": tags,
+        "private": is_private,
+        "tweet": False
+    }
+
+    req_url = "https://qiita.com/api/v2/items"
+    req_body = json.dumps(post_data).encode("utf-8")
+    
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        req = urllib.request.Request(req_url, data=req_body, headers=headers, method="POST")
+        with urllib.request.urlopen(req) as res:
+            res_body = res.read().decode("utf-8")
+            response_json = json.loads(res_body)
+            return jsonify({
+                "success": True,
+                "url": response_json.get("url"),
+                "message": "Qiitaに投稿しました！"
+            })
+    except urllib.error.HTTPError as e:
+        error_msg = e.read().decode("utf-8")
+        try:
+            error_json = json.loads(error_msg)
+            return jsonify({"error": f"Qiita APIエラー: {error_json.get('message')}"}), e.code
+        except:
+            return jsonify({"error": f"Qiita APIエラー: {e.reason}"}), e.code
+    except Exception as e:
+        return jsonify({"error": f"投稿中にエラーが発生しました: {str(e)}"}), 500
 
 
 if __name__ == "__main__":
