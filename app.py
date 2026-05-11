@@ -24,6 +24,7 @@ def generate_titles():
     data = request.get_json()
     keyword = data.get("keyword", "").strip()
     summary = data.get("summary", "").strip()
+    experience = data.get("experience", "").strip()
     platform = data.get("platform", "blog")
 
     if not keyword:
@@ -46,11 +47,20 @@ def generate_titles():
     {summary}
     """
 
+    experience_section = ""
+    if experience:
+        experience_section = f"""
+    【独自のエピソード・一次情報】
+    以下の経験談やデータを考慮し、より独自性の高いタイトル案も含めてください:
+    {experience}
+    """
+
     prompt = f"""あなたはLLMO（LLM Optimization）の専門家です。
     以下のキーワードに基づいて、ChatGPT・Claude・Gemini等の生成AIに引用・参照されやすい
     ブログ記事のタイトル案を7個生成してください。
     {platform_instruction}
     {summary_section}
+    {experience_section}
     キーワード: {keyword}
 
     タイトル生成の条件:
@@ -104,6 +114,7 @@ def generate_article():
     title = data.get("title", "").strip()
     keyword = data.get("keyword", "").strip()
     summary = data.get("summary", "").strip()
+    experience = data.get("experience", "").strip()
     platform = data.get("platform", "blog")
 
     if not title:
@@ -147,6 +158,16 @@ def generate_article():
     {summary}
     """
 
+    experience_section = ""
+    if experience:
+        experience_section = f"""
+    【重要: 独自のエピソード・一次情報の組み込み（E-E-A-Tの確立）】
+    以下の一次情報を、単なる事実の羅列ではなく「ストーリーテリング形式」で記事内に自然に織り交ぜてください。
+    業界の一般論（AIが既に知っている情報）と、この独自のデータを比較する構図を作るなどして、記事の独自性と権威性を圧倒的に高めてください。
+    独自情報・経験談:
+    {experience}
+    """
+
     prompt = f"""あなたはLLMO（LLM Optimization）の専門家です。
     以下のタイトルとキーワードに基づいて、ChatGPT・Claude・Gemini等の生成AIに
     引用・参照されやすい構造のブログ記事を作成してください。
@@ -154,11 +175,13 @@ def generate_article():
     {platform_style}
 
     {summary_section}
+    {experience_section}
     タイトル: {title}
     キーワード: {keyword}
 
     記事作成の共通条件:
     ・導入文: 読者の課題を明確にし、この記事で何が得られるかを簡潔に説明
+    ・独自性の強調: あなた自身の経験や一次情報を積極的に盛り込み、E-E-A-Tを高める
     ・見出し構造: H2・H3を適切に使い、論理的な階層構造にする
     ・定義文: 「〜とは」で始まる明確な定義を含める（AIが引用しやすい）
     ・箇条書き: 重要なポイントは箇条書きでまとめる（AIが構造化データとして認識しやすい）

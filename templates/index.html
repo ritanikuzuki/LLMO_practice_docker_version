@@ -32,6 +32,11 @@
             </div>
 
             <div class="form-group">
+                <label for="experience">独自のエピソード・一次情報 <span class="optional">任意（E-E-A-T向上）</span></label>
+                <textarea id="experience" rows="4" placeholder="例：ツールを導入して作業時間を30%削減できたエピソードや、自社独自のアンケート結果、失敗談など、AIには書けないあなただけの経験を入力してください。"></textarea>
+            </div>
+
+            <div class="form-group">
                 <label for="platform">投稿先プラットフォーム</label>
                 <select id="platform" class="select-input">
                     <option value="qiita">Qiita (技術解説・エラー解決向け)</option>
@@ -125,6 +130,7 @@
         async function generateTitles() {
             const keyword = document.getElementById("keyword").value.trim();
             const summary = document.getElementById("summary").value.trim();
+            const experience = document.getElementById("experience").value.trim();
             const platform = document.getElementById("platform").value;
 
             if (!keyword) {
@@ -138,7 +144,7 @@
                 const res = await fetch("/api/generate-titles", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ keyword, summary, platform })
+                    body: JSON.stringify({ keyword, summary, experience, platform })
                 });
                 const data = await res.json();
 
@@ -196,6 +202,7 @@
 
             const keyword = document.getElementById("keyword").value.trim();
             const summary = document.getElementById("summary").value.trim();
+            const experience = document.getElementById("experience").value.trim();
             const platform = document.getElementById("platform").value;
 
             showLoading("記事を生成中... (30秒〜1分ほどかかります)");
@@ -204,7 +211,7 @@
                 const res = await fetch("/api/generate-article", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ title: selectedTitle, keyword, summary, platform })
+                    body: JSON.stringify({ title: selectedTitle, keyword, summary, experience, platform })
                 });
                 const data = await res.json();
 
@@ -313,6 +320,7 @@
             document.getElementById("step-article").classList.add("hidden");
             document.getElementById("keyword").value = "";
             document.getElementById("summary").value = "";
+            document.getElementById("experience").value = "";
             document.getElementById("titles-list").innerHTML = "";
             document.getElementById("article-preview").innerHTML = "";
             document.getElementById("article-md-code").textContent = "";
