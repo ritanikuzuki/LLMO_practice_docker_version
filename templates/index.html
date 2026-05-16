@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,11 +8,11 @@
     <meta name="description" content="LLMに引用されやすいコンテンツを自動生成するシステム">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
     <header>
         <div class="header-inner">
-            <h1>📝 LLMO コンテンツ生成システム</h1>
-            <p class="subtitle">CloudFlow Dynamics — AI に引用されるコンテンツを作る</p>
+            <h1> LLMO最適化された記事自動生成ツール</h1>
         </div>
     </header>
 
@@ -28,21 +29,22 @@
 
             <div class="form-group">
                 <label for="summary">記事の概要 / 既存コンテンツ <span class="optional">任意</span></label>
-                <textarea id="summary" rows="5" placeholder="書きたい記事の概要、またはLLMO最適化したい既存コンテンツを貼り付けてください"></textarea>
+                <textarea id="summary" rows="5" placeholder="書きたい記事の概要、またはLLMO最適化したい既存コンテンツを入力"></textarea>
             </div>
 
             <div class="form-group">
-                <label for="experience">独自のエピソード・一次情報 <span class="optional">任意（E-E-A-T向上）</span></label>
-                <textarea id="experience" rows="4" placeholder="例：ツールを導入して作業時間を30%削減できたエピソードや、自社独自のアンケート結果、失敗談など、AIには書けないあなただけの経験を入力してください。"></textarea>
+                <label for="experience">独自のエピソード・一次情報 <span class="optional">任意（入力すくことでよりLLMO最適化されます！）</span></label>
+                <textarea id="experience" rows="4"
+                    placeholder="例：ツールを導入して作業時間を30%削減できたエピソードや、自社独自のアンケート結果、失敗談など、AIには書けない個人的な経験を入力"></textarea>
             </div>
 
             <div class="form-group">
                 <label for="platform">投稿先プラットフォーム</label>
                 <select id="platform" class="select-input">
-                    <option value="qiita">Qiita (技術解説・エラー解決向け)</option>
-                    <option value="zenn">Zenn (モダン技術・体系的解説向け)</option>
-                    <option value="note">note (ビジネス・コラム・概念解説向け)</option>
-                    <option value="blog">個人ブログ / その他 (汎用SEO・LLMO)</option>
+                    <option value="qiita">Qiita (エンジニア向けの実務寄り技術記事)</option>
+                    <option value="zenn">Zenn (コアで数式や論文なものを取り扱う技術記事)</option>
+                    <option value="note">note (個人の学びなどの比較的ラフなもの)</option>
+                    <option value="blog">その他 </option>
                 </select>
             </div>
 
@@ -60,7 +62,7 @@
             <div id="titles-list"></div>
 
             <div class="action-row">
-                <button class="btn-secondary" onclick="regenerateTitles()">🔄 タイトルを再生成</button>
+                <button class="btn-secondary" onclick="regenerateTitles()"> タイトルを再生成</button>
                 <button id="btn-generate-article" class="btn-primary" onclick="generateArticle()" disabled>
                     選択したタイトルで記事を生成
                 </button>
@@ -83,16 +85,16 @@
             </div>
 
             <div class="action-row">
-                <button class="btn-secondary" onclick="copyMarkdown()">📋 Markdownをコピー</button>
-                <button class="btn-secondary" onclick="resetAll()">🔄 最初からやり直す</button>
+                <button class="btn-secondary" onclick="copyMarkdown()"> Markdownをコピー</button>
+                <button class="btn-secondary" onclick="resetAll()"> 最初からやり直す</button>
             </div>
 
             <!-- 投稿オプション (Qiitaなど) -->
             <div id="publish-section" class="publish-box hidden">
                 <hr>
-                <h3>🚀 Qiita に直接投稿する</h3>
+                <h3> Qiita に直接投稿する</h3>
                 <p class="hint">アクセストークンを入力して、この記事を Qiita に投稿できます。</p>
-                
+
                 <div class="form-group">
                     <label for="qiita-token">Qiita アクセストークン</label>
                     <input type="password" id="qiita-token" placeholder="Qiitaの個人用アクセストークンを入力">
@@ -223,7 +225,7 @@
                 articleMarkdown = data.article_md;
                 document.getElementById("article-preview").innerHTML = data.article_html;
                 document.getElementById("article-md-code").textContent = data.article_md;
-                
+
                 // 投稿セクションの表示制御
                 const publishSection = document.getElementById("publish-section");
                 if (platform === "qiita") {
@@ -308,7 +310,7 @@
             navigator.clipboard.writeText(articleMarkdown).then(() => {
                 const btn = event.target;
                 const orig = btn.textContent;
-                btn.textContent = "✅ コピーしました！";
+                btn.textContent = " コピーしました！";
                 setTimeout(() => btn.textContent = orig, 2000);
             });
         }
@@ -337,4 +339,5 @@
         }
     </script>
 </body>
+
 </html>
